@@ -1,4 +1,7 @@
 import pygame
+{
+    "python.analysis.extraPaths": ["./src", "./lib"]
+}
 import random
 import sys
 
@@ -62,3 +65,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #bleeeeeeeeeeeeeeeeee

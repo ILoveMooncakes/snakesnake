@@ -139,6 +139,7 @@ def main():
     pygame.display.set_caption("Snake Interface Game")
     clock = pygame.time.Clock()
 
+
     backgrounds = {
         state: load_background(filename, fallback_color)
         for state, (filename, fallback_color) in zip(
@@ -275,10 +276,12 @@ def main():
                 state = STATE_GAME_OVER
             else:
                 for snake in snakes:
-                        snake.draw(screen)
-                    f"P{idx + 1}: {score}" for idx, score in enumerate(scores)
-                )
-                draw_text(screen, scores_text, 24, (10, 10))
+                    snake.draw(screen)
+
+                pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(food[0], food[1], CELL, CELL))
+
+                score_text = "   ".join(f"P{idx + 1}: {score}" for idx, score in enumerate(scores))
+                draw_text(screen, score_text, 24, (10, 10))
 
                 for player_index, snake in enumerate(snakes):
                     if snake.head() == food:

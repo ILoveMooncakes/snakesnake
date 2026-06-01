@@ -124,21 +124,21 @@ def play_game(screen, clock, colors):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
-                if event.key == pygame.K_UP and dir1 != (0, CELL):
+                if event.key == pygame.K_w and dir1 != (0, CELL):
                     dir1 = (0, -CELL)
-                elif event.key == pygame.K_DOWN and dir1 != (0, -CELL):
+                elif event.key == pygame.K_s and dir1 != (0, -CELL):
                     dir1 = (0, CELL)
-                elif event.key == pygame.K_LEFT and dir1 != (CELL, 0):
+                elif event.key == pygame.K_a and dir1 != (CELL, 0):
                     dir1 = (-CELL, 0)
-                elif event.key == pygame.K_RIGHT and dir1 != (-CELL, 0):
+                elif event.key == pygame.K_d and dir1 != (-CELL, 0):
                     dir1 = (CELL, 0)
-                elif event.key == pygame.K_w and dir2 != (0, CELL):
+                elif event.key == pygame.K_UP and dir2 != (0, CELL):
                     dir2 = (0, -CELL)
-                elif event.key == pygame.K_s and dir2 != (0, -CELL):
+                elif event.key == pygame.K_DOWN and dir2 != (0, -CELL):
                     dir2 = (0, CELL)
-                elif event.key == pygame.K_a and dir2 != (CELL, 0):
+                elif event.key == pygame.K_LEFT and dir2 != (CELL, 0):
                     dir2 = (-CELL, 0)
-                elif event.key == pygame.K_d and dir2 != (-CELL, 0):
+                elif event.key == pygame.K_RIGHT and dir2 != (-CELL, 0):
                     dir2 = (CELL, 0)
 
         # move

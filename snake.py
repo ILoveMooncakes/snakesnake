@@ -32,12 +32,17 @@ def random_cell_position(margin=CELL):
     return (random.randrange(margin, W - margin, CELL), random.randrange(margin, H - margin, CELL))
 
 
-def add_positions(a, b):
-    return a[0] + b[0], a[1] + b[1]
-
-
 def is_out_of_bounds(position):
     return position[0] < 0 or position[0] >= W or position[1] < 0 or position[1] >= H
+
+
+def draw_snake(surface, color, snake):
+    for x, y in snake:
+        pygame.draw.rect(surface, color, pygame.Rect(x, y, CELL, CELL))
+
+
+def centered_x(center, width):
+    return center - width // 2
 
 
 def show_menu(screen, clock):
@@ -77,7 +82,7 @@ def show_controls(screen, clock):
 
 
 def color_selection(screen, clock):
-    # color selection and background image
+    # color selection
     bg = load_scaled_image("play.jpeg")
     p1_index = 0
     p2_index = 1 if len(COLOR_PRESETS) > 1 else 0
@@ -101,7 +106,7 @@ def color_selection(screen, clock):
                     return None
 
         screen.blit(bg, (0, 0))
-        # lange farben
+        # preview farben
         preview_width = 96
         preview_height = 320
         x1 = W // 4
@@ -127,7 +132,8 @@ def play_game(screen, clock, colors):
     player1_score = 0
     player2_score = 0
 
-    player1_color, player2_color = [COLOR_PRESETS[index][0] for index in colors]
+    player1_color = COLOR_PRESETS[colors[0]][0]
+    player2_color = COLOR_PRESETS[colors[1]][0]
 
     while True:
         for event in pygame.event.get():
@@ -154,9 +160,10 @@ def play_game(screen, clock, colors):
                 elif event.key == pygame.K_RIGHT and direction2 != (-CELL, 0):
                     direction2 = (CELL, 0)
 
-        new_head1 = add_positions(player1_snake[0], direction1)
+        # move sneks
+        new_head1 = (player1_snake[0][0] + direction1[0], player1_snake[0][1] + direction1[1])
         player1_snake.insert(0, new_head1)
-        new_head2 = add_positions(player2_snake[0], direction2)
+        new_head2 = (player2_snake[0][0] + direction2[0], player2_snake[0][1] + direction2[1])
         player2_snake.insert(0, new_head2)
 
         if new_head1 == food:
@@ -181,13 +188,11 @@ def play_game(screen, clock, colors):
         if player2_dead:
             return show_game_over(screen, clock, dead=2, scores=(player1_score, player2_score))
 
-        # draw
+        # draw snek and yum
         screen.blit(bg, (0, 0))
-        for segment in player1_snake:
-            pygame.draw.rect(screen, player1_color, pygame.Rect(segment[0], segment[1], CELL, CELL))
-        for segment in player2_snake:
-            pygame.draw.rect(screen, player2_color, pygame.Rect(segment[0], segment[1], CELL, CELL))
-        pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(food[0], food[1], CELL, CELL))
+        draw_snake(screen, player1_color, player1_snake)
+        draw_snake(screen, player2_color, player2_snake)
+        pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(*food, CELL, CELL))
         pygame.display.flip()
         clock.tick(10)
 
@@ -200,7 +205,7 @@ def show_game_over(screen, clock, dead=0, scores=(0, 0)):
         filename = "gameover2.jpeg"
     else:
         filename = "gameover.jpeg"
-
+    # notfallbild
     path = resource_path(filename)
     if not path.is_file():
         # fallback to default
@@ -226,12 +231,12 @@ def show_game_over(screen, clock, dead=0, scores=(0, 0)):
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
         screen.blit(over, (0, 0))
-        # score
-        y = (2 * H) // 3 - p1_surf.get_height() // 2 - 20
-        x1 = W // 4 - p1_surf.get_width() // 2 + 90
-        x2 = 3 * W // 4 - p2_surf.get_width() // 2
-        screen.blit(p1_surf, (x1, y))
-        screen.blit(p2_surf, (x2, y))
+        # score position
+        score_y = 2 * H // 3 - p1_surf.get_height() // 2 - 20
+        x1 = centered_x(W // 4 + 90, p1_surf.get_width())
+        x2 = centered_x(3 * W // 4, p2_surf.get_width())
+        screen.blit(p1_surf, (x1, score_y))
+        screen.blit(p2_surf, (x2, score_y))
         pygame.display.flip()
         clock.tick(30)
 

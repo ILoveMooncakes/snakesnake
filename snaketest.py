@@ -1,7 +1,5 @@
 import pygame
-{
-    "python.analysis.extraPaths": ["./src", "./lib"]
-}
+
 import random
 import sys
 
@@ -70,7 +68,7 @@ def main():
             or new_head1 in snake1[1:]
             or new_head1 in snake2
         ):
-            print(f"GAME OVER   Player 1 score: {score1}, Player 2 score: {score2}")
+            print(f" Player 1 score: {score1}, Player 2 score: {score2}")
             pygame.quit()
             sys.exit()
 
@@ -82,7 +80,7 @@ def main():
             or new_head2 in snake2[1:]
             or new_head2 in snake1
         ):
-            print(f"GAME OVER   Player 1 score: {score1}, Player 2 score: {score2}")
+            print(f" Player 1 score: {score1}, Player 2 score: {score2}")
             pygame.quit()
             sys.exit()
 

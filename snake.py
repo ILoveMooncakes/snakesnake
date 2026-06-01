@@ -1,303 +1,260 @@
+import pygame
 import os
 import random
 import sys
 
-import pygame
-
-WIDTH = 400
-HEIGHT = 400
-CELL = 20
-FPS = 10
-
-STATE_START = "start"
-STATE_CONTROLS = "controls"
-STATE_SKIN_SELECT = "skin_select"
-STATE_PLAYING = "playing"
-STATE_GAME_OVER = "game_over"
-
-BACKGROUND_FILES = {
-    STATE_START: "start_background.png",
-    STATE_CONTROLS: "controls_background.png",
-    STATE_SKIN_SELECT: "skin_background.png",
-    STATE_PLAYING: "game_background.png",
-    STATE_GAME_OVER: "game_over_background.png",
-}
-
+# simple color presets for selection
 COLOR_PRESETS = [
-    {"name": "Emerald", "color": (34, 177, 76), "accent": (0, 100, 0)},
-    {"name": "Sunset", "color": (255, 127, 39), "accent": (200, 80, 0)},
-    {"name": "Ocean", "color": (0, 162, 232), "accent": (0, 90, 160)},
-    {"name": "Violet", "color": (163, 73, 164), "accent": (120, 20, 120)},
-    {"name": "Gold", "color": (255, 201, 14), "accent": (180, 140, 0)},
+    ((34, 177, 76), (0, 100, 0)),
+    ((255, 127, 39), (200, 80, 0)),
+    ((0, 162, 232), (0, 90, 160)),
+    ((163, 73, 164), (120, 20, 120)),
+    ((255, 201, 14), (180, 140, 0)),
 ]
 
-PLAYER_CONTROLS = {
-    1: {
-        pygame.K_w: (0, -CELL),
-        pygame.K_s: (0, CELL),
-        pygame.K_a: (-CELL, 0),
-        pygame.K_d: (CELL, 0),
-    },
-    2: {
-        pygame.K_UP: (0, -CELL),
-        pygame.K_DOWN: (0, CELL),
-        pygame.K_LEFT: (-CELL, 0),
-        pygame.K_RIGHT: (CELL, 0),
-    },
-}
+CELL = 20
+W, H = 1200, 640
 
 
 def resource_path(filename):
     base = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base, filename)
+    return os.path.join(base, "bilder", filename)
 
 
-def load_background(filename, fallback_color):
-    path = resource_path(filename)
-    if os.path.isfile(path):
-        image = pygame.image.load(path).convert()
-        return pygame.transform.scale(image, (WIDTH, HEIGHT))
-    surface = pygame.Surface((WIDTH, HEIGHT))
-    surface.fill(fallback_color)
-    return surface
-
-
-def draw_text(surface, text, size, position, color=(255, 255, 255), center=False):
-    font = pygame.font.SysFont(None, size)
-    rendered = font.render(text, True, color)
-    rect = rendered.get_rect()
-    if center:
-        rect.center = position
-    else:
-        rect.topleft = position
-    surface.blit(rendered, rect)
-
-
-class Snake:
-    def __init__(self, body, direction, skin_index=0):
-        self.body = list(body)
-        self.direction = direction
-        self.grow_pending = 0
-        self.skin_index = skin_index
-
-    def head(self):
-        return self.body[0]
-
-    def update_direction(self, new_direction):
-        if (new_direction[0] * -1, new_direction[1] * -1) != self.direction:
-            self.direction = new_direction
-
-    def move(self):
-        new_head = (self.head()[0] + self.direction[0], self.head()[1] + self.direction[1])
-        self.body.insert(0, new_head)
-        if self.grow_pending > 0:
-            self.grow_pending -= 1
-        else:
-            self.body.pop()
-
-    def grow(self):
-        self.grow_pending += 1
-
-    def collides_with_self(self):
-        return self.head() in self.body[1:]
-
-    def collides_with_point(self, point):
-        return point in self.body
-
-    def draw(self, surface):
-        preset = COLOR_PRESETS[self.skin_index % len(COLOR_PRESETS)]
-        body_color = preset["color"]
-        accent_color = preset["accent"]
-        for index, segment in enumerate(self.body):
-            color = accent_color if index == 0 else body_color
-            pygame.draw.rect(surface, color, pygame.Rect(segment[0], segment[1], CELL, CELL))
-            pygame.draw.rect(surface, (0, 0, 0), pygame.Rect(segment[0], segment[1], CELL, CELL), 1)
-
-
-def random_food_position(snakes):
-    positions = {segment for snake in snakes for segment in snake.body}
+def show_menu(screen, clock):
+    menu = pygame.image.load(resource_path("menu.jpeg")).convert()
+    menu = pygame.transform.scale(menu, (W, H))
     while True:
-        position = (random.randrange(0, WIDTH, CELL), random.randrange(0, HEIGHT, CELL))
-        if position not in positions:
-            return position
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    return "color_select"
+                if event.key == pygame.K_2:
+                    return "controls"
+                if event.key == pygame.K_3:
+                    pygame.quit()
+                    sys.exit()
+        screen.blit(menu, (0, 0))
+        pygame.display.flip()
+        clock.tick(30)
 
 
-def reset_game(mode, colors):
-    snake1 = Snake([(100, 100), (80, 100), (60, 100)], (CELL, 0), skin_index=colors[0])
-    snakes = [snake1]
-    if mode == 2:
-        snake2 = Snake([(100, 300), (120, 300), (140, 300)], (-CELL, 0), skin_index=colors[1])
-        snakes.append(snake2)
-    food = random_food_position(snakes)
-    scores = [0, 0] if mode == 2 else [0]
-    return snakes, food, scores
+def show_controls(screen, clock):
+    controls = pygame.image.load(resource_path("controls.jpeg")).convert()
+    controls = pygame.transform.scale(controls, (W, H))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+                return
+        screen.blit(controls, (0, 0))
+        pygame.display.flip()
+        clock.tick(30)
 
 
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Snake Interface Game")
-    clock = pygame.time.Clock()
+def color_selection(screen, clock):
+    # Show play.jpeg as background while selecting colors
+    bg = pygame.image.load(resource_path("play.jpeg")).convert()
+    bg = pygame.transform.scale(bg, (W, H))
+    p1_index = 0
+    p2_index = 1 if len(COLOR_PRESETS) > 1 else 0
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:
+                    p1_index = (p1_index - 1) % len(COLOR_PRESETS)
+                elif event.key == pygame.K_d:
+                    p1_index = (p1_index + 1) % len(COLOR_PRESETS)
+                elif event.key == pygame.K_LEFT:
+                    p2_index = (p2_index - 1) % len(COLOR_PRESETS)
+                elif event.key == pygame.K_RIGHT:
+                    p2_index = (p2_index + 1) % len(COLOR_PRESETS)
+                elif event.key == pygame.K_1:
+                    return (p1_index, p2_index)
+                elif event.key == pygame.K_ESCAPE:
+                    return None
+
+        screen.blit(bg, (0, 0))
+        # Draw taller previews in left and right halves
+        preview_width = 96
+        preview_height = 320
+        x1 = W // 4
+        x2 = 3 * W // 4
+        y = H // 3
+        pygame.draw.rect(screen, COLOR_PRESETS[p1_index][0], pygame.Rect(x1 - preview_width // 2, y - preview_height // 2, preview_width, preview_height))
+        pygame.draw.rect(screen, COLOR_PRESETS[p2_index][0], pygame.Rect(x2 - preview_width // 2, y - preview_height // 2, preview_width, preview_height))
+
+        pygame.display.flip()
+        clock.tick(30)
 
 
-    backgrounds = {
-        state: load_background(filename, fallback_color)
-        for state, (filename, fallback_color) in zip(
-            BACKGROUND_FILES.keys(),
-            [
-                (BACKGROUND_FILES[STATE_START], (10, 10, 40)),
-                (BACKGROUND_FILES[STATE_CONTROLS], (20, 50, 20)),
-                (BACKGROUND_FILES[STATE_SKIN_SELECT], (50, 10, 50)),
-                (BACKGROUND_FILES[STATE_PLAYING], (0, 0, 0)),
-                (BACKGROUND_FILES[STATE_GAME_OVER], (60, 10, 10)),
-            ],
-        )
-    }
+def play_game(screen, clock, colors):
+    # colors is tuple(p1_index, p2_index)
+    bg = pygame.image.load(resource_path("game.jpeg")).convert()
+    bg = pygame.transform.scale(bg, (W, H))
 
-    state = STATE_START
-    selected_mode = 1
-    active_color_picker = 0
-    chosen_colors = [0, 1]
-    snakes, food, scores = reset_game(selected_mode, chosen_colors)
-    winner_text = ""
+    start_y = H // 2
+    snake1 = [(W // 4, start_y), (W // 4 - CELL, start_y), (W // 4 - 2 * CELL, start_y)]
+    snake2 = [(3 * W // 4, start_y), (3 * W // 4 + CELL, start_y), (3 * W // 4 + 2 * CELL, start_y)]
+    food = (random.randrange(CELL, W - CELL, CELL), random.randrange(CELL, H - CELL, CELL))
+    dir1 = (CELL, 0)
+    dir2 = (-CELL, 0)
+    score1 = 0
+    score2 = 0
+
+    p1_color = COLOR_PRESETS[colors[0]][0]
+    p2_color = COLOR_PRESETS[colors[1]][0]
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return "menu"
+                if event.key == pygame.K_UP and dir1 != (0, CELL):
+                    dir1 = (0, -CELL)
+                elif event.key == pygame.K_DOWN and dir1 != (0, -CELL):
+                    dir1 = (0, CELL)
+                elif event.key == pygame.K_LEFT and dir1 != (CELL, 0):
+                    dir1 = (-CELL, 0)
+                elif event.key == pygame.K_RIGHT and dir1 != (-CELL, 0):
+                    dir1 = (CELL, 0)
+                elif event.key == pygame.K_w and dir2 != (0, CELL):
+                    dir2 = (0, -CELL)
+                elif event.key == pygame.K_s and dir2 != (0, -CELL):
+                    dir2 = (0, CELL)
+                elif event.key == pygame.K_a and dir2 != (CELL, 0):
+                    dir2 = (-CELL, 0)
+                elif event.key == pygame.K_d and dir2 != (-CELL, 0):
+                    dir2 = (CELL, 0)
+
+        # move
+        new1 = (snake1[0][0] + dir1[0], snake1[0][1] + dir1[1])
+        snake1.insert(0, new1)
+        new2 = (snake2[0][0] + dir2[0], snake2[0][1] + dir2[1])
+        snake2.insert(0, new2)
+
+        if new1 == food:
+            food = (random.randrange(0, W, CELL), random.randrange(0, H, CELL))
+            score1 += 1
+        else:
+            snake1.pop()
+
+        if new2 == food:
+            food = (random.randrange(0, W, CELL), random.randrange(0, H, CELL))
+            score2 += 1
+        else:
+            snake2.pop()
+
+        # collisions
+        def out_of_bounds(p):
+            return p[0] < 0 or p[0] >= W or p[1] < 0 or p[1] >= H
+
+        if out_of_bounds(new1) or new1 in snake1[1:] or new1 in snake2:
+            result = show_game_over(screen, clock, dead=1, scores=(score1, score2))
+            return result
+        if out_of_bounds(new2) or new2 in snake2[1:] or new2 in snake1:
+            result = show_game_over(screen, clock, dead=2, scores=(score1, score2))
+            return result
+
+        # draw
+        screen.blit(bg, (0, 0))
+        for seg in snake1:
+            pygame.draw.rect(screen, p1_color, pygame.Rect(seg[0], seg[1], CELL, CELL))
+        for seg in snake2:
+            pygame.draw.rect(screen, p2_color, pygame.Rect(seg[0], seg[1], CELL, CELL))
+        pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(food[0], food[1], CELL, CELL))
+        pygame.display.flip()
+        clock.tick(10)
+
+
+def show_game_over(screen, clock, dead=0, scores=(0, 0)):
+    # dead: 1 => player1 died, 2 => player2 died. Choose image accordingly.
+    if dead == 2:
+        filename = "gameover2.jpeg"
+    else:
+        filename = "gameover.jpeg"
+
+    path = resource_path(filename)
+    if not os.path.isfile(path):
+        # fallback to default
+        path = resource_path("gameover.jpeg")
+
+    over = pygame.image.load(path).convert()
+    over = pygame.transform.scale(over, (W, H))
+    font = pygame.font.SysFont(None, 48)
+
+    p1_text = f"P1: {scores[0]}"
+    p2_text = f"P2: {scores[1]}"
+    p1_surf = font.render(p1_text, True, (255, 255, 255))
+    p2_surf = font.render(p2_text, True, (255, 255, 255))
+
+    p1_bg = pygame.Surface((p1_surf.get_width() + 20, p1_surf.get_height() + 12))
+    p1_bg.set_alpha(200)
+    p1_bg.fill((0, 0, 0))
+    p2_bg = pygame.Surface((p2_surf.get_width() + 20, p2_surf.get_height() + 12))
+    p2_bg.set_alpha(200)
+    p2_bg.fill((0, 0, 0))
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
-            if state == STATE_START:
-                if event.type == pygame.KEYDOWN:
-                    if event.key in (pygame.K_1, pygame.K_KP1):
-                        selected_mode = 1
-                    elif event.key in (pygame.K_2, pygame.K_KP2):
-                        selected_mode = 2
-                    elif event.key == pygame.K_SPACE:
-                        state = STATE_CONTROLS
-
-            elif state == STATE_CONTROLS:
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    state = STATE_SKIN_SELECT
-
-            elif state == STATE_SKIN_SELECT:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_TAB:
-                        active_color_picker = 1 - active_color_picker if selected_mode == 2 else 0
-                    elif event.key in (pygame.K_LEFT, pygame.K_a):
-                        chosen_colors[active_color_picker] = (
-                            chosen_colors[active_color_picker] - 1
-                        ) % len(COLOR_PRESETS)
-                    elif event.key in (pygame.K_RIGHT, pygame.K_d):
-                        chosen_colors[active_color_picker] = (
-                            chosen_colors[active_color_picker] + 1
-                        ) % len(COLOR_PRESETS)
-                    elif event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
-                        snakes, food, scores = reset_game(selected_mode, chosen_colors)
-                        winner_text = ""
-                        state = STATE_PLAYING
-
-            elif state == STATE_PLAYING:
-                if event.type == pygame.KEYDOWN:
-                    for player_id, controls in PLAYER_CONTROLS.items():
-                        if player_id > len(snakes):
-                            continue
-                        if event.key in controls:
-                            snakes[player_id - 1].update_direction(controls[event.key])
-
-            elif state == STATE_GAME_OVER:
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    state = STATE_START
-
-        screen.blit(backgrounds[state], (0, 0))
-
-        if state == STATE_START:
-            draw_text(screen, "SNAKE ARENA", 48, (WIDTH // 2, 80), center=True)
-            draw_text(screen, "Press 1 for Single Player", 28, (WIDTH // 2, 160), center=True)
-            draw_text(screen, "Press 2 for Two Player", 28, (WIDTH // 2, 200), center=True)
-            draw_text(screen, f"Selected mode: {selected_mode}", 24, (WIDTH // 2, 250), center=True)
-            draw_text(screen, "Press SPACE to continue", 24, (WIDTH // 2, 320), center=True)
-
-        elif state == STATE_CONTROLS:
-            draw_text(screen, "CONTROLS", 48, (WIDTH // 2, 50), center=True)
-            draw_text(screen, "Player 1: W A S D", 30, (WIDTH // 2, 130), center=True)
-            draw_text(screen, "Player 2: Arrow keys", 30, (WIDTH // 2, 180), center=True)
-            draw_text(screen, "Select mode first on the start screen.", 24, (WIDTH // 2, 240), center=True)
-            draw_text(screen, "Press SPACE to choose snake colors.", 24, (WIDTH // 2, 300), center=True)
-
-        elif state == STATE_SKIN_SELECT:
-            draw_text(screen, "COLOR SELECTION", 42, (WIDTH // 2, 30), center=True)
-            draw_text(screen, "Use LEFT / RIGHT or A / D to change color", 22, (WIDTH // 2, 90), center=True)
-            draw_text(screen, "Press TAB to switch player (two player only)", 22, (WIDTH // 2, 120), center=True)
-            preview_size = 64
-            preview_y = 200
-            for index in range(selected_mode):
-                x = WIDTH // (selected_mode + 1) * (index + 1)
-                player_label = f"Player {index + 1}"
-                draw_text(screen, player_label, 24, (x, preview_y - 60), center=True)
-                color_index = chosen_colors[index]
-                preset = COLOR_PRESETS[color_index]
-                preview_rect = pygame.Rect(0, 0, preview_size, preview_size)
-                preview_rect.center = (x, preview_y)
-                pygame.draw.rect(screen, preset["color"], preview_rect)
-                pygame.draw.rect(screen, preset["accent"], preview_rect, 4)
-                if index == active_color_picker:
-                    pygame.draw.rect(screen, (255, 230, 100), preview_rect.inflate(12, 12), 3)
-                draw_text(screen, preset["name"], 22, (x, preview_y + 48), center=True)
-            draw_text(screen, "Press SPACE to start", 24, (WIDTH // 2, 340), center=True)
-
-        elif state == STATE_PLAYING:
-            for snake in snakes:
-                snake.move()
-
-            collision = False
-            if len(snakes) == 2 and snakes[0].head() == snakes[1].head():
-                winner_text = "Draw!"
-                collision = True
-            else:
-                for index, snake in enumerate(snakes):
-                    head = snake.head()
-                    if head[0] < 0 or head[0] >= WIDTH or head[1] < 0 or head[1] >= HEIGHT:
-                        winner_text = f"Player {2 if index == 0 and len(snakes) == 2 else 1} wins!"
-                        collision = True
-                        break
-                    if snake.collides_with_self():
-                        winner_text = f"Player {2 if index == 0 and len(snakes) == 2 else 1} wins!"
-                        collision = True
-                        break
-                    if len(snakes) == 2:
-                        other = snakes[1 - index]
-                        if head in other.body:
-                            winner_text = f"Player {2 if index == 0 else 1} wins!"
-                            collision = True
-                            break
-
-            if collision:
-                state = STATE_GAME_OVER
-            else:
-                for snake in snakes:
-                    snake.draw(screen)
-
-                pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(food[0], food[1], CELL, CELL))
-
-                score_text = "   ".join(f"P{idx + 1}: {score}" for idx, score in enumerate(scores))
-                draw_text(screen, score_text, 24, (10, 10))
-
-                for player_index, snake in enumerate(snakes):
-                    if snake.head() == food:
-                        snake.grow()
-                        scores[player_index] += 1
-                        food = random_food_position(snakes)
-                        break
-
-        elif state == STATE_GAME_OVER:
-            draw_text(screen, "GAME OVER", 54, (WIDTH // 2, 100), center=True)
-            draw_text(screen, winner_text or "Game has ended.", 26, (WIDTH // 2, 180), center=True)
-            draw_text(screen, "Press SPACE to return to start", 24, (WIDTH // 2, 260), center=True)
-            draw_text(screen, f"Final score: {' | '.join(str(score) for score in scores)}", 24, (WIDTH // 2, 320), center=True)
-
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    return "restart"
+                if event.key == pygame.K_ESCAPE:
+                    return "menu"
+        screen.blit(over, (0, 0))
+        # draw scores far apart; position slightly lower on screen and nudge P1 right
+        # position vertically a bit above two-thirds of the height
+        y = (2 * H) // 3 - max(p1_bg.get_height(), p2_bg.get_height()) // 2 - 20
+        # nudge player 1 a tiny bit more to the right so scores aren't too close
+        x1 = W // 4 - p1_bg.get_width() // 2 + 60
+        x2 = 3 * W // 4 - p2_bg.get_width() // 2
+        screen.blit(p1_bg, (x1, y))
+        screen.blit(p1_surf, (x1 + 10, y + 6))
+        screen.blit(p2_bg, (x2, y))
+        screen.blit(p2_surf, (x2 + 10, y + 6))
         pygame.display.flip()
-        clock.tick(FPS)
+        clock.tick(30)
+
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((W, H))
+    clock = pygame.time.Clock()
+
+    while True:
+        action = show_menu(screen, clock)
+        if action == "controls":
+            show_controls(screen, clock)
+            continue
+        if action == "color_select":
+            colors = color_selection(screen, clock)
+            if colors is None:
+                continue
+            # start playing loop; after a game over, either restart or go to menu
+            while True:
+                result = play_game(screen, clock, colors)
+                if result == "menu":
+                    break
+                if result == "restart":
+                    continue
 
 
 if __name__ == "__main__":

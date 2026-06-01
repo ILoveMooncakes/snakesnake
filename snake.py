@@ -3,7 +3,7 @@ import os
 import random
 import sys
 
-# simple color presets for selection
+# farben
 COLOR_PRESETS = [
     ((34, 177, 76), (0, 100, 0)),
     ((255, 127, 39), (200, 80, 0)),
@@ -60,7 +60,7 @@ def show_controls(screen, clock):
 
 
 def color_selection(screen, clock):
-    # Show play.jpeg as background while selecting colors
+    # color selection and bild
     bg = pygame.image.load(resource_path("play.jpeg")).convert()
     bg = pygame.transform.scale(bg, (W, H))
     p1_index = 0
@@ -85,7 +85,7 @@ def color_selection(screen, clock):
                     return None
 
         screen.blit(bg, (0, 0))
-        # Draw taller previews in left and right halves
+        # lange farben
         preview_width = 96
         preview_height = 320
         x1 = W // 4
@@ -163,12 +163,14 @@ def play_game(screen, clock, colors):
         def out_of_bounds(p):
             return p[0] < 0 or p[0] >= W or p[1] < 0 or p[1] >= H
 
-        if out_of_bounds(new1) or new1 in snake1[1:] or new1 in snake2:
-            result = show_game_over(screen, clock, dead=1, scores=(score1, score2))
-            return result
-        if out_of_bounds(new2) or new2 in snake2[1:] or new2 in snake1:
-            result = show_game_over(screen, clock, dead=2, scores=(score1, score2))
-            return result
+        p1_dead = out_of_bounds(new1) or new1 in snake1[1:] or new1 in snake2
+        p2_dead = out_of_bounds(new2) or new2 in snake2[1:] or new2 in snake1
+        if p1_dead and p2_dead:
+            return show_game_over(screen, clock, dead=3, scores=(score1, score2))
+        if p1_dead:
+            return show_game_over(screen, clock, dead=1, scores=(score1, score2))
+        if p2_dead:
+            return show_game_over(screen, clock, dead=2, scores=(score1, score2))
 
         # draw
         screen.blit(bg, (0, 0))
@@ -182,8 +184,10 @@ def play_game(screen, clock, colors):
 
 
 def show_game_over(screen, clock, dead=0, scores=(0, 0)):
-    # dead: 1 => player1 died, 2 => player2 died. Choose image accordingly.
-    if dead == 2:
+    # dead: 1 => player1 died, 2 => player2 died, 3 => both died.
+    if dead == 3:
+        filename = "gameover3.jpeg"
+    elif dead == 2:
         filename = "gameover2.jpeg"
     else:
         filename = "gameover.jpeg"
@@ -195,19 +199,12 @@ def show_game_over(screen, clock, dead=0, scores=(0, 0)):
 
     over = pygame.image.load(path).convert()
     over = pygame.transform.scale(over, (W, H))
-    font = pygame.font.SysFont(None, 48)
+    font = pygame.font.SysFont(None, 96)
 
-    p1_text = f"P1: {scores[0]}"
-    p2_text = f"P2: {scores[1]}"
-    p1_surf = font.render(p1_text, True, (255, 255, 255))
-    p2_surf = font.render(p2_text, True, (255, 255, 255))
-
-    p1_bg = pygame.Surface((p1_surf.get_width() + 20, p1_surf.get_height() + 12))
-    p1_bg.set_alpha(200)
-    p1_bg.fill((0, 0, 0))
-    p2_bg = pygame.Surface((p2_surf.get_width() + 20, p2_surf.get_height() + 12))
-    p2_bg.set_alpha(200)
-    p2_bg.fill((0, 0, 0))
+    p1_text = f"{scores[0]}"
+    p2_text = f"{scores[1]}"
+    p1_surf = font.render(p1_text, True, (0, 0, 0))
+    p2_surf = font.render(p2_text, True, (0, 0, 0))
 
     while True:
         for event in pygame.event.get():
@@ -220,16 +217,12 @@ def show_game_over(screen, clock, dead=0, scores=(0, 0)):
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
         screen.blit(over, (0, 0))
-        # draw scores far apart; position slightly lower on screen and nudge P1 right
-        # position vertically a bit above two-thirds of the height
-        y = (2 * H) // 3 - max(p1_bg.get_height(), p2_bg.get_height()) // 2 - 20
-        # nudge player 1 a tiny bit more to the right so scores aren't too close
-        x1 = W // 4 - p1_bg.get_width() // 2 + 60
-        x2 = 3 * W // 4 - p2_bg.get_width() // 2
-        screen.blit(p1_bg, (x1, y))
-        screen.blit(p1_surf, (x1 + 10, y + 6))
-        screen.blit(p2_bg, (x2, y))
-        screen.blit(p2_surf, (x2 + 10, y + 6))
+        # score
+        y = (2 * H) // 3 - p1_surf.get_height() // 2 - 20
+        x1 = W // 4 - p1_surf.get_width() // 2 + 90
+        x2 = 3 * W // 4 - p2_surf.get_width() // 2
+        screen.blit(p1_surf, (x1, y))
+        screen.blit(p2_surf, (x2, y))
         pygame.display.flip()
         clock.tick(30)
 

@@ -1,9 +1,10 @@
-import pygame
-import os
 import random
 import sys
+from pathlib import Path
 
-# farben
+import pygame
+
+# colors
 COLOR_PRESETS = [
     ((34, 177, 76), (0, 100, 0)),
     ((255, 127, 39), (200, 80, 0)),
@@ -14,16 +15,34 @@ COLOR_PRESETS = [
 
 CELL = 20
 W, H = 1200, 640
+SCREEN_SIZE = (W, H)
+
+ASSETS_DIR = Path(__file__).resolve().parent / "bilder"
 
 
 def resource_path(filename):
-    base = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base, "bilder", filename)
+    return ASSETS_DIR / filename
+
+
+def load_scaled_image(filename):
+    return pygame.transform.scale(pygame.image.load(resource_path(filename)).convert(), SCREEN_SIZE)
+
+
+def random_cell_position(margin=CELL):
+    return (random.randrange(margin, W - margin, CELL), random.randrange(margin, H - margin, CELL))
+
+
+def add_positions(a, b):
+    return a[0] + b[0], a[1] + b[1]
+
+
+def is_out_of_bounds(position):
+    return position[0] < 0 or position[0] >= W or position[1] < 0 or position[1] >= H
 
 
 def show_menu(screen, clock):
-    menu = pygame.image.load(resource_path("menu.jpeg")).convert()
-    menu = pygame.transform.scale(menu, (W, H))
+    menu = load_scaled_image("menu.jpeg")
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -43,16 +62,14 @@ def show_menu(screen, clock):
 
 
 def show_controls(screen, clock):
-    controls = pygame.image.load(resource_path("controls.jpeg")).convert()
-    controls = pygame.transform.scale(controls, (W, H))
+    controls = load_scaled_image("controls.jpeg")
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
                 return
         screen.blit(controls, (0, 0))
         pygame.display.flip()
@@ -60,9 +77,8 @@ def show_controls(screen, clock):
 
 
 def color_selection(screen, clock):
-    # color selection and bild
-    bg = pygame.image.load(resource_path("play.jpeg")).convert()
-    bg = pygame.transform.scale(bg, (W, H))
+    # color selection and background image
+    bg = load_scaled_image("play.jpeg")
     p1_index = 0
     p2_index = 1 if len(COLOR_PRESETS) > 1 else 0
     while True:
@@ -80,7 +96,7 @@ def color_selection(screen, clock):
                 elif event.key == pygame.K_RIGHT:
                     p2_index = (p2_index + 1) % len(COLOR_PRESETS)
                 elif event.key == pygame.K_1:
-                    return (p1_index, p2_index)
+                    return p1_index, p2_index
                 elif event.key == pygame.K_ESCAPE:
                     return None
 
@@ -99,24 +115,21 @@ def color_selection(screen, clock):
 
 
 def play_game(screen, clock, colors):
-    # colors is tuple(p1_index, p2_index)
-    bg = pygame.image.load(resource_path("game.jpeg")).convert()
-    bg = pygame.transform.scale(bg, (W, H))
+    # colors is a tuple of (player1_color_index, player2_color_index)
+    bg = load_scaled_image("game.jpeg")
 
     start_y = H // 2
-    snake1 = [(W // 4, start_y), (W // 4 - CELL, start_y), (W // 4 - 2 * CELL, start_y)]
-    snake2 = [(3 * W // 4, start_y), (3 * W // 4 + CELL, start_y), (3 * W // 4 + 2 * CELL, start_y)]
-    food = (random.randrange(CELL, W - CELL, CELL), random.randrange(CELL, H - CELL, CELL))
-    dir1 = (CELL, 0)
-    dir2 = (-CELL, 0)
-    score1 = 0
-    score2 = 0
+    player1_snake = [(W // 4, start_y), (W // 4 - CELL, start_y), (W // 4 - 2 * CELL, start_y)]
+    player2_snake = [(3 * W // 4, start_y), (3 * W // 4 + CELL, start_y), (3 * W // 4 + 2 * CELL, start_y)]
+    food = random_cell_position(CELL)
+    direction1 = (CELL, 0)
+    direction2 = (-CELL, 0)
+    player1_score = 0
+    player2_score = 0
 
-    p1_color = COLOR_PRESETS[colors[0]][0]
-    p2_color = COLOR_PRESETS[colors[1]][0]
+    player1_color, player2_color = [COLOR_PRESETS[index][0] for index in colors]
 
-    running = True
-    while running:
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -124,60 +137,56 @@ def play_game(screen, clock, colors):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
-                if event.key == pygame.K_w and dir1 != (0, CELL):
-                    dir1 = (0, -CELL)
-                elif event.key == pygame.K_s and dir1 != (0, -CELL):
-                    dir1 = (0, CELL)
-                elif event.key == pygame.K_a and dir1 != (CELL, 0):
-                    dir1 = (-CELL, 0)
-                elif event.key == pygame.K_d and dir1 != (-CELL, 0):
-                    dir1 = (CELL, 0)
-                elif event.key == pygame.K_UP and dir2 != (0, CELL):
-                    dir2 = (0, -CELL)
-                elif event.key == pygame.K_DOWN and dir2 != (0, -CELL):
-                    dir2 = (0, CELL)
-                elif event.key == pygame.K_LEFT and dir2 != (CELL, 0):
-                    dir2 = (-CELL, 0)
-                elif event.key == pygame.K_RIGHT and dir2 != (-CELL, 0):
-                    dir2 = (CELL, 0)
+                if event.key == pygame.K_w and direction1 != (0, CELL):
+                    direction1 = (0, -CELL)
+                elif event.key == pygame.K_s and direction1 != (0, -CELL):
+                    direction1 = (0, CELL)
+                elif event.key == pygame.K_a and direction1 != (CELL, 0):
+                    direction1 = (-CELL, 0)
+                elif event.key == pygame.K_d and direction1 != (-CELL, 0):
+                    direction1 = (CELL, 0)
+                elif event.key == pygame.K_UP and direction2 != (0, CELL):
+                    direction2 = (0, -CELL)
+                elif event.key == pygame.K_DOWN and direction2 != (0, -CELL):
+                    direction2 = (0, CELL)
+                elif event.key == pygame.K_LEFT and direction2 != (CELL, 0):
+                    direction2 = (-CELL, 0)
+                elif event.key == pygame.K_RIGHT and direction2 != (-CELL, 0):
+                    direction2 = (CELL, 0)
 
-        # move
-        new1 = (snake1[0][0] + dir1[0], snake1[0][1] + dir1[1])
-        snake1.insert(0, new1)
-        new2 = (snake2[0][0] + dir2[0], snake2[0][1] + dir2[1])
-        snake2.insert(0, new2)
+        new_head1 = add_positions(player1_snake[0], direction1)
+        player1_snake.insert(0, new_head1)
+        new_head2 = add_positions(player2_snake[0], direction2)
+        player2_snake.insert(0, new_head2)
 
-        if new1 == food:
-            food = (random.randrange(0, W, CELL), random.randrange(0, H, CELL))
-            score1 += 1
+        if new_head1 == food:
+            food = random_cell_position(0)
+            player1_score += 1
         else:
-            snake1.pop()
+            player1_snake.pop()
 
-        if new2 == food:
-            food = (random.randrange(0, W, CELL), random.randrange(0, H, CELL))
-            score2 += 1
+        if new_head2 == food:
+            food = random_cell_position(0)
+            player2_score += 1
         else:
-            snake2.pop()
+            player2_snake.pop()
 
-        # collisions
-        def out_of_bounds(p):
-            return p[0] < 0 or p[0] >= W or p[1] < 0 or p[1] >= H
+        player1_dead = is_out_of_bounds(new_head1) or new_head1 in player1_snake[1:] or new_head1 in player2_snake
+        player2_dead = is_out_of_bounds(new_head2) or new_head2 in player2_snake[1:] or new_head2 in player1_snake
 
-        p1_dead = out_of_bounds(new1) or new1 in snake1[1:] or new1 in snake2
-        p2_dead = out_of_bounds(new2) or new2 in snake2[1:] or new2 in snake1
-        if p1_dead and p2_dead:
-            return show_game_over(screen, clock, dead=3, scores=(score1, score2))
-        if p1_dead:
-            return show_game_over(screen, clock, dead=1, scores=(score1, score2))
-        if p2_dead:
-            return show_game_over(screen, clock, dead=2, scores=(score1, score2))
+        if player1_dead and player2_dead:
+            return show_game_over(screen, clock, dead=3, scores=(player1_score, player2_score))
+        if player1_dead:
+            return show_game_over(screen, clock, dead=1, scores=(player1_score, player2_score))
+        if player2_dead:
+            return show_game_over(screen, clock, dead=2, scores=(player1_score, player2_score))
 
         # draw
         screen.blit(bg, (0, 0))
-        for seg in snake1:
-            pygame.draw.rect(screen, p1_color, pygame.Rect(seg[0], seg[1], CELL, CELL))
-        for seg in snake2:
-            pygame.draw.rect(screen, p2_color, pygame.Rect(seg[0], seg[1], CELL, CELL))
+        for segment in player1_snake:
+            pygame.draw.rect(screen, player1_color, pygame.Rect(segment[0], segment[1], CELL, CELL))
+        for segment in player2_snake:
+            pygame.draw.rect(screen, player2_color, pygame.Rect(segment[0], segment[1], CELL, CELL))
         pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(food[0], food[1], CELL, CELL))
         pygame.display.flip()
         clock.tick(10)
@@ -193,7 +202,7 @@ def show_game_over(screen, clock, dead=0, scores=(0, 0)):
         filename = "gameover.jpeg"
 
     path = resource_path(filename)
-    if not os.path.isfile(path):
+    if not path.is_file():
         # fallback to default
         path = resource_path("gameover.jpeg")
 

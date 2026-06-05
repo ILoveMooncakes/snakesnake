@@ -1,9 +1,0 @@
-{
-  // Use the project's .venv Python interpreter if present
-  "python.defaultInterpreterPath":"C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
-  // Automatically activate the environment in the integrated terminal
-  "python.terminal.activateEnvironment": true,
-  // Format-on-save optional preference
-  "editor.formatOnSave": false,
-  "python-envs.defaultEnvManager": "ms-python.python:system"
-}

@@ -3,16 +3,16 @@ import pygame
 import random
 import sys
 
-#some comments
+#diese Datei kann gelöscht werden, da es nur den Prototypen darstellt
 
 def main():
     pygame.init()
-    w, h, s = 400, 400, 20
+    w, h, s = 800, 800, 20
     screen = pygame.display.set_mode((w, h))
     clock = pygame.time.Clock()
 
-    snake1 = [(100, 100), (80, 100), (60, 100)]
-    snake2 = [(300, 100), (320, 100), (340, 100)]
+    snake1 = [(100, 400), (80, 100), (60, 100)]
+    snake2 = [(600, 400), (320, 100), (340, 100)]
     food = (random.randrange(0, w, s), random.randrange(0, h, s))
     direction1 = (s, 0)
     direction2 = (-s, 0)

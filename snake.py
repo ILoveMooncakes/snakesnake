@@ -57,7 +57,7 @@ def show_menu(screen, clock):
                     return "color_select"
                 if event.key == pygame.K_2:
                     return "controls"
-                if event.key == pygame.K_3:
+                if event.key == pygame.K_q:
                     pygame.quit()
                     sys.exit()
         screen.blit(menu, (0, 0))
@@ -225,7 +225,7 @@ def show_game_over(screen, clock, dead=0, scores=(0, 0)):
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
+                if event.key == pygame.K_r:
                     return "restart"
                 if event.key == pygame.K_ESCAPE:
                     return "menu"
